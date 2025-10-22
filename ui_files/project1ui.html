@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intelligent Notes Analyzer</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+    header { background-color: #4b6cb7; background-image: linear-gradient(315deg, #4b6cb7 0%, #182848 74%); width: 100%; padding: 20px 0; color: white; text-align: center; font-size: 1.8em; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .container { max-width: 800px; width: 90%; margin: 30px auto; background-color: white; padding: 25px 30px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+    input[type="file"], input[type="text"] { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1em; }
+    button { padding: 10px 20px; margin-top: 10px; border: none; border-radius: 8px; background-color: #4b6cb7; color: white; font-size: 1em; cursor: pointer; transition: 0.3s; }
+    button:hover { background-color: #182848; }
+    h2 { color: #182848; margin-top: 20px; }
+    .output { white-space: pre-wrap; background-color: #eef0f5; padding: 15px; border-radius: 10px; margin-top: 10px; min-height: 100px; }
+</style>
+</head>
+<body>
+<header>Intelligent Notes Analyzer</header>
+<div class="container">
+    <h2>Upload Your Notes</h2>
+    <input type="file" id="fileInput" accept=".txt,.pdf">
+    <button onclick="uploadFile()">Load Notes</button>
+
+    <h2>Abstractive Summary</h2>
+    <div class="output" id="summaryOutput">Summary will appear here...</div>
+
+    <h2>Ask a Question</h2>
+    <input type="text" id="questionInput" placeholder="Type your question here...">
+    <button onclick="askQuestion()">Get Answer</button>
+    <div class="output" id="answerOutput">Answer will appear here...</div>
+
+    <h2>Generate Quiz</h2>
+    <button onclick="generateQuiz()">Generate Quiz</button>
+    <div class="output" id="quizOutput">Quiz will appear here...</div>
+</div>
+
+<script>
+async function uploadFile() {
+    const fileInput = document.getElementById('fileInput');
+    if (!fileInput.files.length) return alert("Please select a file.");
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    const res = await fetch('/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if(data.error) return alert(data.error);
+    document.getElementById('summaryOutput').innerText = data.summary;
+}
+
+async function askQuestion() {
+    const question = document.getElementById('questionInput').value;
+    if(!question) return alert("Please type a question.");
+    const res = await fetch('/ask', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question})
+    });
+    const data = await res.json();
+    if(data.error) return alert(data.error);
+    document.getElementById('answerOutput').innerText = data.answer;
+}
+
+async function generateQuiz() {
+    const res = await fetch('/quiz');
+    const data = await res.json();
+    if(data.error) return alert(data.error);
+    const quizDiv = document.getElementById('quizOutput');
+    quizDiv.innerHTML = '';
+    data.quiz.forEach((q, i) => {
+        quizDiv.innerHTML += `${i+1}. ${q.question}\nAnswer: ${q.answer}\n\n`;
+    });
+}
+</script>
+</body>
+</html>
+
